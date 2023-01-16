@@ -45,10 +45,12 @@ app.post('/participants', async (req, res) => {
     
     const check = await db.collection("participants").findOne({name: participant})
 
+
+
     if (!check){
         db.collection("participants").insertOne({name: participant, lastStatus:Date.now()})
         db.collection("messages").insertOne({from: participant, to: 'Todos', text: 'entra na sala...', type: 'status', time: date})
-        res.status(201)
+        res.status(201).send()
         return;
     }
 
@@ -110,6 +112,18 @@ app.get('/messages', async (req, res) => {
     }
     res.send('ok')
 })
+
+app.post('/status', async (req, res) => {
+    const user= req.headers.user
+    const check = await db.collection('participants').find(user.name)
+    if(!check){
+        res.status(404).send()
+        return;
+    }
+    await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()}})
+    res.status(200).send()
+})
+
 
 
 
