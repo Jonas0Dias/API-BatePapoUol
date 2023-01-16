@@ -124,8 +124,30 @@ app.post('/status', async (req, res) => {
     res.status(200).send()
 })
 
+async function desconectarUsuario () {
+    const participantsList = await db.collection("participants").find().toArray()
+    
+    try {
+        participantsList.map(async participant => {
+            const tempopassado = Date.now() - participant.lastStatus
+            if (tempopassado > 10000 ) {
+                await db.collection("participants").deleteOne({_id: ObjectId(participant._id)})
 
+                await db.collection("messages").insertOne({
+                    from: participant.name,
+                    to: "Todos",
+                    text: "sai da sala...",
+                    type: "status",
+                    time: dayjs().format('HH:mm:ss')
+                })
+            }
+        });
+    } catch {
 
+    }
+}
 
 const port = 5000;
 app.listen(port, () => console.log(`Server running in port: ${port}`));
+
+setInterval(desconectarUsuario, 15000)
